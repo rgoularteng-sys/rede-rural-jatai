@@ -122,6 +122,7 @@ body{padding-bottom:env(safe-area-inset-bottom)}
 .duas{display:grid;grid-template-columns:1.6fr 1fr;gap:10px}
 .conc{display:grid;gap:8px;padding:12px;border-radius:12px;background:var(--azul-claro)}
 .conc input[type=date]{min-height:48px}
+#mapa{height:360px;border-radius:12px;border:1px solid var(--linha);background:#dfe7e1}
 [hidden]{display:none!important}
 @media (max-width:480px){
   .topo{padding:18px 16px 22px}
@@ -219,7 +220,19 @@ body{padding-bottom:env(safe-area-inset-bottom)}
           Usar minha localização agora</button>
       </div>
       <div id="bloco-manual" hidden style="display:grid;gap:10px">
-        <p class="dica">Cole aqui a localização do poste: link do Google Maps, localização recebida pelo WhatsApp ou coordenadas.</p>
+        <button type="button" class="btn btn-pri" id="b-mapa" style="width:100%">
+          <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2z M9 4v14 M15 6v14" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+          Marcar o poste no mapa</button>
+        <div id="mapa-box" hidden style="display:grid;gap:8px">
+          <div id="mapa" role="application" aria-label="Mapa para marcar o local do poste"></div>
+          <div class="botoes">
+            <button type="button" class="btn btn-sec" id="b-camada">Ver mapa de ruas</button>
+            <button type="button" class="btn btn-sec" id="b-aqui">Ir para onde estou</button>
+          </div>
+          <p class="dica" id="mapa-dica">Toque no mapa onde fica o poste. Depois arraste o marcador para ajustar.</p>
+          <button type="button" class="btn btn-env" id="b-usar-ponto" disabled>Usar este ponto</button>
+        </div>
+        <p class="dica">Ou cole a localização do poste: link do Google Maps, localização recebida pelo WhatsApp ou coordenadas.</p>
         <div class="campo">
           <label for="in-coord">Localização do poste</label>
           <input id="in-coord" inputmode="text" autocomplete="off" placeholder="Ex.: -17.8812, -51.7156 ou link do Maps">
@@ -532,7 +545,7 @@ function lerCoordenadas(txt) {
   return null;
 }
 
-const ORIGEM = { gps_aparelho: "GPS do celular", foto: "localização da foto", manual: "informada manualmente" };
+const ORIGEM = { gps_aparelho: "GPS do celular", foto: "localização da foto", manual: "informada manualmente", mapa: "marcada no mapa" };
 function definirLocal(lat, lng, origem, precisao) {
   estado.local = { lat, lng, origem, precisao: precisao ? Math.round(precisao) : null };
   const L = CONFIG.limites;
@@ -553,6 +566,53 @@ function mostrarLocal(msg, tipo, html) {
   el.hidden = false; el.className = "local" + (tipo ? " " + tipo : "");
   if (html) el.innerHTML = msg; else el.textContent = msg;
 }
+
+
+/* ---------- Mapa para marcar o ponto (Leaflet, carregado só quando usado) ---------- */
+let mapa = null, marcador = null, camadaSat = null, camadaRua = null, usandoSat = true;
+function carregarLeaflet() {
+  if (window.L) return Promise.resolve();
+  return new Promise((ok, falha) => {
+    const css = document.createElement("link"); css.rel = "stylesheet";
+    css.href = "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"; document.head.appendChild(css);
+    const js = document.createElement("script");
+    js.src = "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js";
+    js.onload = ok; js.onerror = falha; document.head.appendChild(js);
+  });
+}
+$("b-mapa").onclick = async () => {
+  $("mapa-box").hidden = false;
+  if (mapa) { mapa.invalidateSize(); return; }
+  try { await carregarLeaflet(); } catch (_) { $("mapa-dica").textContent = "Não foi possível abrir o mapa agora. Cole a localização no campo abaixo."; return; }
+  mapa = L.map("mapa", { zoomControl: true }).setView([-17.881, -51.714], 11);
+  camadaSat = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", { maxZoom: 19, attribution: "Imagens © Esri" });
+  camadaRua = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: "© OpenStreetMap" });
+  camadaSat.addTo(mapa);
+  mapa.on("click", e => colocarMarcador(e.latlng));
+  setTimeout(() => mapa.invalidateSize(), 50);
+  $("mapa-box").scrollIntoView({ behavior: "smooth", block: "start" });
+};
+function colocarMarcador(ll) {
+  if (!marcador) { marcador = L.marker(ll, { draggable: true }).addTo(mapa); }
+  else marcador.setLatLng(ll);
+  $("b-usar-ponto").disabled = false;
+}
+$("b-camada").onclick = () => {
+  if (!mapa) return;
+  usandoSat = !usandoSat;
+  mapa.removeLayer(usandoSat ? camadaRua : camadaSat); (usandoSat ? camadaSat : camadaRua).addTo(mapa);
+  $("b-camada").textContent = usandoSat ? "Ver mapa de ruas" : "Ver satélite";
+};
+$("b-aqui").onclick = () => {
+  if (!mapa || !navigator.geolocation) return;
+  navigator.geolocation.getCurrentPosition(p => mapa.setView([p.coords.latitude, p.coords.longitude], 15), () => {}, { enableHighAccuracy: true, timeout: 15000 });
+};
+$("b-usar-ponto").onclick = () => {
+  if (!marcador) return;
+  const ll = marcador.getLatLng();
+  definirLocal(ll.lat, ll.lng, "mapa");
+  $("mapa-box").hidden = true;
+};
 
 /* ---------- Progresso ---------- */
 function atualizarProgresso() {
@@ -663,6 +723,7 @@ $("b-novo").onclick = () => {
   $("bloco-gps").hidden = true; $("bloco-manual").hidden = true; $("bloco-manual").style.display = "none";
   ignorarFoto = false; $("local-foto").hidden = true; $("pergunta-local").hidden = false; atualizarProgresso();
   $("prev-carimbo").hidden = true;
+  $("mapa-box").hidden = true; if (marcador) { marcador.remove(); marcador = null; } $("b-usar-ponto").disabled = true;
   $("sucesso").hidden = true; $("sucesso").dataset.ativo = "0"; $("form").hidden = false;
   document.querySelector(".progresso").hidden = false; window.scrollTo({ top: 0 });
 };
