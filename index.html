@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#14532d">
+<title>Rede Elétrica Rural Jataí</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* Layout: uma coluna estilo app de celular; cabeçalho verde-campo, faixa âmbar de sinalização, cartões numerados por etapa. */
+:root{
+  --campo:#14532d;      /* verde-escuro */
+  --folha:#2e7d32;      /* verde de ação */
+  --broto:#9fd4a6;      /* verde-claro */
+  --menta:#eaf6ec;      /* verde bem claro */
+  --azul:#1f4e9c;       /* azul institucional da Prefeitura [CONFIRMAR tom no manual de marca] */
+  --azul-claro:#e4edf9;
+  --papel:#f2f7f3;
+  --cartao:#ffffff;
+  --tinta:#1b2620;
+  --suave:#56665d;
+  --linha:#d3e3d7;
+  --erro:#b3261e;
+  --aviso-bg:#fff6dc;
+  --display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+  --body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--papel);color:var(--tinta);font-family:var(--body);font-size:17px;line-height:1.45}
+.topo{background:linear-gradient(160deg,var(--campo) 0%,#1d6b3a 60%,var(--folha) 100%);color:#fff;padding:22px 18px 26px;position:relative}
+.topo::after{content:"";position:absolute;left:0;right:0;bottom:0;height:6px;
+  background:linear-gradient(90deg,var(--broto) 0 40%,#fff 40% 60%,var(--azul) 60% 100%)}
+.marca{display:flex;align-items:center;gap:10px;font-size:14px;letter-spacing:.04em;text-transform:uppercase;opacity:.92}
+.marca svg{flex:none}
+h1{font-family:var(--display);font-weight:700;font-size:34px;line-height:1.02;margin:14px 0 8px;text-wrap:balance}
+.topo p{margin:0;max-width:34ch;color:#e3f2e6}
+main{max-width:560px;margin:0 auto;padding:18px 16px 40px;display:grid;gap:16px}
+.demo{background:var(--aviso-bg);border:1px solid #e9c66a;border-radius:10px;padding:10px 12px;font-size:14px}
+.etapa{background:var(--cartao);border:1px solid var(--linha);border-top:4px solid var(--broto);border-radius:14px;padding:18px 16px;display:grid;gap:12px}
+.etapa h2{font-family:var(--display);font-size:23px;font-weight:700;margin:0;color:var(--campo);display:flex;align-items:center;gap:10px}
+.num{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--azul);color:#fff;font-size:17px;flex:none}
+.dica{font-size:14.5px;color:var(--suave);margin:0}
+.obrig{color:var(--erro)}
+.chips{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.chip{position:relative}
+.chip input{position:absolute;opacity:0;inset:0}
+.chip label{display:flex;flex-direction:column;gap:6px;height:100%;padding:12px;border:1.5px solid var(--linha);border-radius:12px;cursor:pointer;font-weight:600;font-size:15.5px;line-height:1.2}
+.chip label small{font-weight:400;color:var(--suave);font-size:13px}
+.chip input:checked+label{border-color:var(--folha);background:var(--menta);box-shadow:inset 0 0 0 1px var(--folha)}
+.chip input:focus-visible+label{outline:3px solid var(--azul);outline-offset:2px}
+.chip svg{width:30px;height:30px}
+.botoes{display:flex;gap:10px;flex-wrap:wrap}
+.btn{appearance:none;border:0;border-radius:12px;padding:13px 16px;font:600 16px var(--body);cursor:pointer;display:inline-flex;align-items:center;gap:8px;justify-content:center}
+.btn:focus-visible{outline:3px solid var(--azul);outline-offset:2px}
+.btn-pri{background:var(--folha);color:#fff;flex:1}
+.btn-sec{background:var(--azul-claro);color:var(--azul);color:var(--tinta);flex:1}
+.btn-env{background:var(--azul);color:#fff;width:100%;font-size:18px;padding:16px}
+.btn-env[disabled]{opacity:.6;cursor:wait}
+.fotos{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.foto{position:relative;aspect-ratio:1;border-radius:10px;overflow:hidden;background:var(--menta)}
+.foto img{width:100%;height:100%;object-fit:cover;display:block}
+.foto button{position:absolute;top:4px;right:4px;width:28px;height:28px;border-radius:50%;border:0;background:rgba(0,0,0,.6);color:#fff;font-size:16px;cursor:pointer}
+.foto .gps{position:absolute;left:4px;bottom:4px;background:rgba(31,78,156,.9);color:#fff;font-size:11px;padding:2px 6px;border-radius:6px}
+.seg{display:grid;grid-template-columns:1fr 1fr;border:1.5px solid var(--linha);border-radius:12px;overflow:hidden}
+.seg button{border:0;background:#fff;padding:12px 8px;font:600 15px var(--body);cursor:pointer;color:var(--tinta)}
+.seg button[aria-pressed="true"]{background:var(--folha);color:#fff}
+.seg button:focus-visible{outline:3px solid var(--azul);outline-offset:-3px}
+.local{border-radius:12px;padding:12px;background:var(--azul-claro);font-size:15px;display:grid;gap:4px}
+.local.ok{background:var(--menta);border:1px solid var(--broto)}
+.local.aviso{background:var(--aviso-bg);border:1px solid #e9c66a}
+.local strong{font-variant-numeric:tabular-nums}
+.local a{color:var(--folha);font-weight:600}
+.campo{display:grid;gap:6px}
+.campo label{font-weight:600;font-size:15.5px}
+.campo input,.campo textarea{width:100%;font:16px var(--body);padding:12px;border:1.5px solid var(--linha);border-radius:10px;background:#fff;color:var(--tinta)}
+.campo input:focus,.campo textarea:focus{outline:none;border-color:var(--folha);box-shadow:0 0 0 3px #cfe8d3}
+.campo textarea{min-height:90px;resize:vertical}
+.campo.invalido input{border-color:var(--erro)}
+.msg-erro{color:var(--erro);font-size:14px;margin:0}
+.lgpd{display:flex;gap:10px;align-items:flex-start;font-size:14px;color:var(--suave)}
+.lgpd input{width:22px;height:22px;flex:none;margin-top:1px;accent-color:var(--folha)}
+.rodape{text-align:center;font-size:13px;display:grid;gap:4px;padding:14px;border-radius:14px;background:var(--azul);color:#dbe6f7}
+.rodape b{color:#fff}
+.sucesso{background:var(--cartao);border:1px solid var(--linha);border-radius:14px;padding:26px 18px;text-align:center;display:grid;gap:12px;justify-items:center}
+.sucesso h2{font-family:var(--display);font-size:30px;margin:0;color:var(--campo)}
+.protocolo{font-family:var(--display);font-size:30px;letter-spacing:.05em;background:var(--azul);color:#fff;padding:8px 16px;border-radius:10px;font-variant-numeric:tabular-nums}
+.progresso{position:sticky;top:0;z-index:5;background:rgba(242,247,243,.94);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border-bottom:1px solid var(--linha);padding:10px 16px}
+.progresso-in{max-width:560px;margin:0 auto;display:grid;gap:6px}
+.progresso-txt{display:flex;justify-content:space-between;font-size:13.5px;color:var(--suave);font-weight:600}
+.progresso-txt b{color:var(--campo)}
+.barras{display:grid;grid-template-columns:repeat(5,1fr);gap:5px}
+.barras i{height:6px;border-radius:3px;background:var(--linha);transition:background .25s}
+.barras i.ok{background:var(--folha)}
+.chip label{min-height:96px}
+.local-foto-wrap{display:grid;gap:6px}
+body{padding-bottom:env(safe-area-inset-bottom)}
+[hidden]{display:none!important}
+@media (max-width:480px){
+  .topo{padding:18px 16px 22px}
+  h1{font-size:29px;margin:12px 0 6px}
+  .topo p{font-size:15.5px}
+  main{padding:14px 12px 32px;gap:14px}
+  .etapa{padding:16px 14px;gap:11px}
+  .etapa h2{font-size:22px}
+  .btn{padding:14px 14px}
+  .seg button{padding:14px 6px;font-size:14.5px}
+}
+@media (max-width:350px){.chips{grid-template-columns:1fr}.chip label{min-height:0}h1{font-size:26px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<header class="topo">
+  <div class="marca">
+    <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="13" r="12" fill="none" stroke="#9fd4a6" stroke-width="2"/><path d="M14.5 5 8 14h4.5L11 21l7-9.5h-4.6z" fill="#ffffff"/></svg>
+    <span id="nome-org">Sindicato Rural de Jataí</span>
+  </div>
+  <h1>Viu um poste ou fio em risco na zona rural? Avise aqui.</h1>
+  <p>Leva 2 minutos. Sua informação ajuda a programar a manutenção da rede e evitar acidentes e queimadas.</p>
+</header>
+
+<div class="progresso" aria-live="polite">
+  <div class="progresso-in">
+    <div class="progresso-txt"><span id="pg-txt">Preencha as 5 etapas</span><b id="pg-num">0 de 5</b></div>
+    <div class="barras" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+  </div>
+</div>
+<main>
+  <div class="demo" id="aviso-demo" hidden><b>Modo demonstração.</b> Este é o visual do formulário. Nada do que for preenchido aqui é enviado.</div>
+
+  <form id="form" novalidate>
+    <div style="display:grid;gap:16px">
+
+    <section class="etapa" aria-labelledby="t1">
+      <h2 id="t1"><span class="num">1</span>Qual é o problema?</h2>
+      <div class="chips" role="radiogroup" aria-label="Tipo de problema">
+        <div class="chip"><input type="radio" name="tipo" id="tp1" value="poste_risco_queda"><label for="tp1">
+          <svg viewBox="0 0 30 30" aria-hidden="true"><path d="M17 4 12 27" stroke="#14532d" stroke-width="2.6" stroke-linecap="round"/><path d="M10 9h12" stroke="#14532d" stroke-width="2.2" stroke-linecap="round"/><path d="M4 27h22" stroke="#1f4e9c" stroke-width="2.6" stroke-linecap="round"/></svg>
+          Poste com risco de queda<small>inclinado, trincado, base solta</small></label></div>
+        <div class="chip"><input type="radio" name="tipo" id="tp2" value="rede_baixa"><label for="tp2">
+          <svg viewBox="0 0 30 30" aria-hidden="true"><path d="M5 4v23M25 4v23" stroke="#14532d" stroke-width="2.6" stroke-linecap="round"/><path d="M5 8Q15 26 25 8" fill="none" stroke="#1f4e9c" stroke-width="2.4"/></svg>
+          Fio / rede baixa<small>fio perto do chão ou de máquinas</small></label></div>
+        <div class="chip"><input type="radio" name="tipo" id="tp3" value="mato_faixa"><label for="tp3">
+          <svg viewBox="0 0 30 30" aria-hidden="true"><path d="M15 3v24" stroke="#14532d" stroke-width="2.6" stroke-linecap="round"/><path d="M4 27c2-6 3-9 5-11M9 27c1-5 2-7 1-12M21 27c0-5 1-8 4-11M26 27c-1-4 0-7 1-9" stroke="#2f6b4f" stroke-width="2.2" fill="none" stroke-linecap="round"/></svg>
+          Mato na faixa da rede<small>árvores ou mato encostando</small></label></div>
+        <div class="chip"><input type="radio" name="tipo" id="tp4" value="outro"><label for="tp4">
+          <svg viewBox="0 0 30 30" aria-hidden="true"><circle cx="15" cy="15" r="11" fill="none" stroke="#14532d" stroke-width="2.4"/><path d="M15 9v8" stroke="#1f4e9c" stroke-width="2.8" stroke-linecap="round"/><circle cx="15" cy="21.5" r="1.7" fill="#1f4e9c"/></svg>
+          Outro problema<small>descreva no final</small></label></div>
+      </div>
+      <p class="msg-erro" id="e-tipo" hidden>Escolha o tipo de problema.</p>
+    </section>
+
+    <section class="etapa" aria-labelledby="t2">
+      <h2 id="t2"><span class="num">2</span>Foto do local <span class="obrig" aria-hidden="true">*</span></h2>
+      <p class="dica">Fotografe o poste inteiro, de onde dá para ver o problema. Até 3 fotos. Data, hora e localização são gravadas na foto automaticamente no envio.</p>
+      <div class="botoes">
+        <button type="button" class="btn btn-pri" id="b-camera">
+          <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h3l2-3h6l2 3h3v13H4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="12" cy="13" r="3.5" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+          Tirar foto</button>
+        <button type="button" class="btn btn-sec" id="b-galeria">Escolher da galeria</button>
+      </div>
+      <input type="file" id="in-camera" accept="image/*" capture="environment" hidden>
+      <input type="file" id="in-galeria" accept="image/*" multiple hidden>
+      <div class="fotos" id="fotos"></div>
+      <p class="msg-erro" id="e-foto" hidden>Envie pelo menos uma foto.</p>
+      <p class="dica" id="a-foto" hidden style="color:#8a5a00">Uma das fotos tem mais de 30 dias. Se a situação mudou, tire uma foto nova.</p>
+    </section>
+
+    <section class="etapa" aria-labelledby="t3">
+      <h2 id="t3"><span class="num">3</span>Onde fica o poste? <span class="obrig" aria-hidden="true">*</span></h2>
+      <div class="local ok" id="local-foto" hidden>
+        <span><b>Localização preenchida pela foto.</b> Confira se o ponto está certo.</span>
+        <strong id="lf-coord"></strong>
+        <a id="lf-link" href="#" target="_blank" rel="noopener">Conferir no mapa</a>
+        <button type="button" class="btn btn-sec" id="b-trocar" style="margin-top:6px">Usar outra localização</button>
+      </div>
+      <div id="pergunta-local" style="display:grid;gap:10px">
+        <p class="dica">Se a foto tiver localização, ela é preenchida sozinha. Se não tiver: você está perto do poste agora?</p>
+        <div class="seg" role="group" aria-label="Está perto do poste agora?">
+          <button type="button" id="s-sim" aria-pressed="false">Sim, estou no local</button>
+          <button type="button" id="s-nao" aria-pressed="false">Não, já saí de lá</button>
+        </div>
+      </div>
+      <div id="bloco-gps" hidden>
+        <button type="button" class="btn btn-pri" id="b-gps" style="width:100%">
+          <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s7-7.2 7-12.5A7 7 0 0 0 5 9.5C5 14.8 12 22 12 22z" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="9.5" r="2.5" fill="currentColor"/></svg>
+          Usar minha localização agora</button>
+      </div>
+      <div id="bloco-manual" hidden style="display:grid;gap:10px">
+        <p class="dica">Cole aqui a localização do poste: link do Google Maps, localização recebida pelo WhatsApp ou coordenadas.</p>
+        <div class="campo">
+          <label for="in-coord">Localização do poste</label>
+          <input id="in-coord" inputmode="text" autocomplete="off" placeholder="Ex.: -17.8812, -51.7156 ou link do Maps">
+        </div>
+      </div>
+      <div class="local" id="local" hidden></div>
+      <p class="msg-erro" id="e-local" hidden>Informe a localização do poste.</p>
+    </section>
+
+    <section class="etapa" aria-labelledby="t4">
+      <h2 id="t4"><span class="num">4</span>UC e responsável</h2>
+      <div class="campo" id="c-uc">
+        <label for="in-uc">Número da unidade consumidora (UC) <span class="obrig">*</span></label>
+        <input id="in-uc" inputmode="numeric" autocomplete="off" placeholder="Está na conta de energia">
+        <p class="dica">Use a UC da propriedade atendida por esse poste ou rede.</p>
+      </div>
+      <div class="campo" id="c-nome">
+        <label for="in-nome">Nome do responsável <span class="obrig">*</span></label>
+        <input id="in-nome" autocomplete="name" placeholder="Quem vai responder por este chamado">
+      </div>
+      <div class="campo" id="c-tel">
+        <label for="in-tel">Telefone / WhatsApp <span class="obrig">*</span></label>
+        <input id="in-tel" type="tel" inputmode="tel" autocomplete="tel" placeholder="(64) 99999-9999">
+      </div>
+      <div class="campo">
+        <label for="in-prop">Propriedade</label>
+        <input id="in-prop" placeholder="Nome da fazenda ou sítio">
+      </div>
+      <div class="campo">
+        <label for="in-reg">Região ou estrada de referência</label>
+        <input id="in-reg" placeholder="Ex.: região do Rio Claro, GO-184 km 20">
+      </div>
+    </section>
+
+    <section class="etapa" aria-labelledby="t5">
+      <h2 id="t5"><span class="num">5</span>Algo mais?</h2>
+      <div class="campo">
+        <label for="in-obs">Observação (opcional)</label>
+        <textarea id="in-obs" maxlength="1000" placeholder="Ex.: poste ao lado da porteira, fio passando sobre o curral"></textarea>
+      </div>
+      <label class="lgpd" for="in-lgpd">
+        <input type="checkbox" id="in-lgpd">
+        <span>Autorizo o uso destes dados (fotos, localização, UC, nome e telefone) pelo Sindicato Rural de Jataí e pela Secretaria Municipal de Desenvolvimento Rural, somente para registrar e encaminhar esta ocorrência à concessionária de energia e para mapear as áreas com mais problemas, conforme a Lei 13.709/2018 (LGPD).</span>
+      </label>
+      <p class="msg-erro" id="e-lgpd" hidden>Marque a autorização para enviar.</p>
+      <input type="text" id="in-site" name="site" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px">
+      <button type="submit" class="btn btn-env" id="b-enviar">Enviar ocorrência</button>
+      <p class="msg-erro" id="e-envio" hidden></p>
+    </section>
+    </div>
+  </form>
+
+  <section class="sucesso" id="sucesso" hidden aria-live="polite">
+    <svg width="56" height="56" viewBox="0 0 56 56" aria-hidden="true"><circle cx="28" cy="28" r="26" fill="#eaf6ec"/><path d="m17 29 7 7 15-16" fill="none" stroke="#2e7d32" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <h2>Ocorrência recebida</h2>
+    <div class="protocolo" id="protocolo"></div>
+    <img id="prev-carimbo" alt="Foto com carimbo de data, localização e protocolo" hidden style="max-width:100%;border-radius:10px">
+    <p class="dica">Guarde este número de protocolo. A equipe pode entrar em contato pelo telefone informado.<br><b>Em caso de fio caído ou risco imediato, não se aproxime e ligue para a concessionária de energia.</b></p>
+    <button type="button" class="btn btn-sec" id="b-novo" style="width:100%">Enviar outra ocorrência</button>
+  </section>
+
+  <footer class="rodape">
+    <div>Realização: <b>Sindicato Rural de Jataí</b></div>
+    <div>Apoio: <b>Prefeitura de Jataí · Secretaria Municipal de Desenvolvimento Rural</b></div>
+  </footer>
+</main>
+
+<script>
+/* ===== CONFIGURAÇÃO ===== */
+const CONFIG = {
+  // URL do App da Web do Google Apps Script (termina em /exec). Vazio = modo demonstração.
+  appsScriptUrl: "https://script.google.com/macros/s/AKfycbz0zv0oqHcy64jRbATSXhMZznvEfsAFKY8xo-Yac5jD0tqSNFTNQO-gO2fJZe8XWNJP/exec",
+  maxFotos: 3,
+  // Retângulo aproximado do município e entorno, só para avisar coordenadas estranhas
+  limites: { latMin: -19.2, latMax: -16.9, lngMin: -53.2, lngMax: -50.6 }
+};
+const DEMO = !CONFIG.appsScriptUrl;
+
+const $ = id => document.getElementById(id);
+const estado = { fotos: [], local: null, fotoLocal: null, perto: null };
+if (DEMO) $("aviso-demo").hidden = false;
+
+/* ---------- Leitura do EXIF (GPS e data) direto do JPEG, sem biblioteca externa ---------- */
+function lerExif(buf) {
+  const v = new DataView(buf), out = {};
+  if (v.getUint16(0) !== 0xFFD8) return out;
+  let o = 2;
+  while (o + 4 < v.byteLength) {
+    const marca = v.getUint16(o), tam = v.getUint16(o + 2);
+    if (marca === 0xFFE1 && v.getUint32(o + 4) === 0x45786966) { lerTiff(v, o + 10, out); break; }
+    if ((marca & 0xFF00) !== 0xFF00 || marca === 0xFFDA) break;
+    o += 2 + tam;
+  }
+  return out;
+}
+function lerTiff(v, t, out) {
+  const le = v.getUint16(t) === 0x4949;
+  const u16 = p => v.getUint16(p, le), u32 = p => v.getUint32(p, le);
+  const ifd = p => { const n = u16(p), m = {}; for (let i = 0; i < n; i++) { const e = p + 2 + i * 12; m[u16(e)] = { tipo: u16(e + 2), qt: u32(e + 4), pos: e + 8 }; } return m; };
+  const valPos = e => (e.tipo === 5 || e.tipo === 10 || (e.tipo === 2 && e.qt > 4)) ? t + u32(e.pos) : e.pos;
+  const rac = e => { const b = valPos(e), r = []; for (let i = 0; i < e.qt; i++) r.push(u32(b + i * 8) / (u32(b + i * 8 + 4) || 1)); return r; };
+  const txt = e => { const b = valPos(e); let s = ""; for (let i = 0; i < e.qt - 1; i++) s += String.fromCharCode(v.getUint8(b + i)); return s; };
+  const ifd0 = ifd(t + u32(t + 4));
+  if (ifd0[0x8825]) {
+    const g = ifd(t + u32(ifd0[0x8825].pos));
+    if (g[2] && g[4]) {
+      const dec = a => a[0] + a[1] / 60 + a[2] / 3600;
+      out.lat = dec(rac(g[2])) * (g[1] && txt(g[1]) === "S" ? -1 : 1);
+      out.lng = dec(rac(g[4])) * (g[3] && txt(g[3]) === "W" ? -1 : 1);
+    }
+  }
+  if (ifd0[0x8769]) {
+    const x = ifd(t + u32(ifd0[0x8769].pos));
+    const d = x[0x9003] && txt(x[0x9003]).match(/(\d{4}):(\d\d):(\d\d) (\d\d):(\d\d):(\d\d)/);
+    if (d) out.data = new Date(+d[1], d[2] - 1, +d[3], +d[4], +d[5], +d[6]);
+  }
+}
+
+/* ---------- Fotos ---------- */
+$("b-camera").onclick = () => $("in-camera").click();
+$("b-galeria").onclick = () => $("in-galeria").click();
+$("in-camera").onchange = e => adicionarFotos(e.target.files, e.target);
+$("in-galeria").onchange = e => adicionarFotos(e.target.files, e.target);
+
+async function adicionarFotos(lista, input) {
+  for (const arq of Array.from(lista || [])) {
+    if (estado.fotos.length >= CONFIG.maxFotos) break;
+    if (!arq.type.startsWith("image/")) continue;
+    let gps = null, data = null;
+    try {
+      const m = lerExif(await arq.slice(0, 256 * 1024).arrayBuffer());
+      if (m.lat != null && isFinite(m.lat) && isFinite(m.lng) && !(m.lat === 0 && m.lng === 0)) gps = { lat: m.lat, lng: m.lng };
+      if (m.data && !isNaN(m.data)) data = m.data;
+    } catch (_) {}
+    if (!data && arq.lastModified) data = new Date(arq.lastModified);
+    let blob;
+    try { blob = await reduzir(arq); } catch (_) { blob = arq; }
+    estado.fotos.push({ blob, url: URL.createObjectURL(blob), gps, data });
+    if (gps && !estado.fotoLocal) estado.fotoLocal = gps;
+  }
+  input.value = "";
+  desenharFotos();
+  sincronizarLocalFoto();
+}
+
+function reduzir(arq, max = 1600, q = 0.82) {
+  return new Promise((ok, falha) => {
+    const img = new Image();
+    img.onload = () => {
+      const k = Math.min(1, max / Math.max(img.width, img.height));
+      const c = document.createElement("canvas");
+      c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+      c.toBlob(b => b ? ok(b) : falha(), "image/jpeg", q);
+      URL.revokeObjectURL(img.src);
+    };
+    img.onerror = falha;
+    img.src = URL.createObjectURL(arq);
+  });
+}
+
+function desenharFotos() {
+  const box = $("fotos"); box.innerHTML = "";
+  estado.fotos.forEach((f, i) => {
+    const d = document.createElement("div"); d.className = "foto";
+    d.innerHTML = `<img src="${f.url}" alt="Foto ${i + 1}"><span class="gps">${f.data ? dataBR(f.data, true) : ""}${f.gps ? " · GPS" : ""}</span><button type="button" aria-label="Remover foto ${i + 1}">×</button>`;
+    d.querySelector("button").onclick = () => {
+      URL.revokeObjectURL(f.url); estado.fotos.splice(i, 1);
+      estado.fotoLocal = (estado.fotos.find(x => x.gps) || {}).gps || null;
+      desenharFotos(); sincronizarLocalFoto();
+    };
+    box.appendChild(d);
+  });
+  const cheio = estado.fotos.length >= CONFIG.maxFotos;
+  $("b-camera").disabled = $("b-galeria").disabled = cheio;
+  if (estado.fotos.length) $("e-foto").hidden = true;
+  const antiga = estado.fotos.some(f => f.data && (Date.now() - f.data) > 30 * 864e5);
+  $("a-foto").hidden = !antiga;
+  atualizarProgresso();
+}
+function dataBR(d, curta) {
+  const p = n => String(n).padStart(2, "0");
+  const dia = `${p(d.getDate())}/${p(d.getMonth() + 1)}${curta ? "" : "/" + d.getFullYear()}`;
+  return `${dia} ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+/* Carimbo gravado na própria imagem: data/hora, coordenadas e protocolo */
+function carimbar(foto, L, prot) {
+  return new Promise(ok => {
+    const img = new Image();
+    img.onload = () => {
+      const c = document.createElement("canvas"); c.width = img.width; c.height = img.height;
+      const g = c.getContext("2d"); g.drawImage(img, 0, 0);
+      const fs = Math.max(16, Math.round(c.width / 38)), pad = Math.round(fs * .6);
+      const linhas = [
+        `Foto: ${foto.data ? dataBR(foto.data) : "data não informada"}   Envio: ${dataBR(new Date())}`,
+        `${L.lat.toFixed(6)}, ${L.lng.toFixed(6)}  (${ORIGEM[L.origem]}${L.precisao ? ", ±" + L.precisao + " m" : ""})`,
+        `Protocolo ${prot} · Jataí-GO`
+      ];
+      const h = linhas.length * fs * 1.3 + pad * 2;
+      g.fillStyle = "rgba(20,83,45,.82)"; g.fillRect(0, c.height - h, c.width, h);
+      g.fillStyle = "#1f4e9c"; g.fillRect(0, c.height - h, c.width, Math.max(3, fs / 5));
+      g.fillStyle = "#fff"; g.font = `600 ${fs}px Barlow, Arial, sans-serif`; g.textBaseline = "top";
+      linhas.forEach((t, i) => g.fillText(t, pad, c.height - h + pad + i * fs * 1.3));
+      c.toBlob(b => ok(b || foto.blob), "image/jpeg", .85);
+      URL.revokeObjectURL(img.src);
+    };
+    img.onerror = () => ok(foto.blob);
+    img.src = URL.createObjectURL(foto.blob);
+  });
+}
+
+/* ---------- Localização ---------- */
+function marcar(perto) {
+  estado.perto = perto;
+  $("s-sim").setAttribute("aria-pressed", perto);
+  $("s-nao").setAttribute("aria-pressed", !perto);
+  $("bloco-gps").hidden = !perto;
+  $("bloco-manual").hidden = perto;
+  $("bloco-manual").style.display = perto ? "none" : "grid";
+  estado.local = null; mostrarLocal();
+}
+/* Usa a localização gravada na foto sempre que existir, sem perguntar nada */
+let ignorarFoto = false;
+function sincronizarLocalFoto() {
+  const usandoFoto = estado.local && estado.local.origem === "foto";
+  if (estado.fotoLocal && !ignorarFoto && (!estado.local || usandoFoto)) {
+    const { lat, lng } = estado.fotoLocal;
+    estado.local = { lat, lng, origem: "foto", precisao: null };
+    $("lf-coord").textContent = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+    $("lf-link").href = `https://www.google.com/maps?q=${lat.toFixed(6)},${lng.toFixed(6)}`;
+    $("local-foto").hidden = false; $("pergunta-local").hidden = true;
+    $("bloco-gps").hidden = true; $("bloco-manual").hidden = true; mostrarLocal();
+    $("e-local").hidden = true;
+  } else if (!estado.fotoLocal && usandoFoto) {
+    estado.local = null; $("local-foto").hidden = true; $("pergunta-local").hidden = false;
+  }
+  atualizarProgresso();
+}
+$("b-trocar").onclick = () => {
+  ignorarFoto = true; estado.local = null;
+  $("local-foto").hidden = true; $("pergunta-local").hidden = false;
+  atualizarProgresso();
+};
+$("s-sim").onclick = () => marcar(true);
+$("s-nao").onclick = () => marcar(false);
+
+$("b-gps").onclick = () => {
+  if (!navigator.geolocation) return mostrarLocal("Este aparelho não informa a localização. Escolha “Não, já saí de lá” e cole a localização.", "aviso");
+  mostrarLocal("Buscando sua localização… fique perto do poste, de preferência a céu aberto.");
+  navigator.geolocation.getCurrentPosition(
+    p => definirLocal(p.coords.latitude, p.coords.longitude, "gps_aparelho", p.coords.accuracy),
+    err => mostrarLocal(err.code === 1
+      ? "A localização foi bloqueada. Libere o acesso à localização para este site nas configurações do navegador e tente de novo."
+      : "Não foi possível obter a localização agora. Tente de novo em local aberto ou cole a localização manualmente.", "aviso"),
+    { enableHighAccuracy: true, timeout: 25000, maximumAge: 0 });
+};
+
+$("in-coord").addEventListener("input", e => {
+  const c = lerCoordenadas(e.target.value);
+  if (c) definirLocal(c.lat, c.lng, "manual");
+  else if (e.target.value.trim().length > 6) { estado.local = null; mostrarLocal("Não reconheci essa localização. Use o formato -17.8812, -51.7156 ou cole o link do Google Maps.", "aviso"); }
+});
+
+function lerCoordenadas(txt) {
+  if (!txt) return null;
+  const t = decodeURIComponent(txt).replace(/\s+/g, " ");
+  const pads = [/@(-?\d{1,2}\.\d+),(-?\d{1,3}\.\d+)/, /[?&](?:q|query|ll|destination)=(-?\d{1,2}\.\d+),\s?(-?\d{1,3}\.\d+)/, /(-?\d{1,2}\.\d{3,})\s*[,; ]\s*(-?\d{1,3}\.\d{3,})/];
+  for (const r of pads) { const m = t.match(r); if (m) return { lat: +m[1], lng: +m[2] }; }
+  // vírgula decimal: -17,8812 -51,7156
+  const m = t.match(/(-?\d{1,2},\d{3,})\s*[; ]\s*(-?\d{1,3},\d{3,})/);
+  if (m) return { lat: +m[1].replace(",", "."), lng: +m[2].replace(",", ".") };
+  return null;
+}
+
+const ORIGEM = { gps_aparelho: "GPS do celular", foto: "localização da foto", manual: "informada manualmente" };
+function definirLocal(lat, lng, origem, precisao) {
+  estado.local = { lat, lng, origem, precisao: precisao ? Math.round(precisao) : null };
+  const L = CONFIG.limites;
+  const fora = lat < L.latMin || lat > L.latMax || lng < L.lngMin || lng > L.lngMax;
+  const prec = estado.local.precisao ? ` · precisão de ${estado.local.precisao} m` : "";
+  const link = `https://www.google.com/maps?q=${lat.toFixed(6)},${lng.toFixed(6)}`;
+  mostrarLocal(
+    `<span>Localização registrada (${ORIGEM[origem]}${prec})</span><strong>${lat.toFixed(6)}, ${lng.toFixed(6)}</strong><a href="${link}" target="_blank" rel="noopener">Conferir no mapa</a>` +
+    (fora ? `<span>Atenção: esse ponto parece fora da região de Jataí. Confira antes de enviar.</span>` : "") +
+    (estado.local.precisao > 100 ? `<span>A precisão está baixa. Se puder, tente de novo a céu aberto.</span>` : ""),
+    fora || estado.local.precisao > 100 ? "aviso" : "ok", true);
+  $("e-local").hidden = true;
+  atualizarProgresso();
+}
+function mostrarLocal(msg, tipo, html) {
+  const el = $("local");
+  if (!msg) { el.hidden = true; return; }
+  el.hidden = false; el.className = "local" + (tipo ? " " + tipo : "");
+  if (html) el.innerHTML = msg; else el.textContent = msg;
+}
+
+/* ---------- Progresso ---------- */
+function atualizarProgresso() {
+  const feitos = [
+    !!document.querySelector('input[name="tipo"]:checked'),
+    estado.fotos.length > 0,
+    !!estado.local,
+    $("in-uc").value.length >= 5 && $("in-nome").value.trim().length >= 3 && $("in-tel").value.replace(/\D/g, "").length >= 10,
+    $("in-lgpd").checked
+  ];
+  const n = feitos.filter(Boolean).length;
+  document.querySelectorAll(".barras i").forEach((el, i) => el.classList.toggle("ok", feitos[i]));
+  $("pg-num").textContent = `${n} de 5`;
+  $("pg-txt").textContent = n === 5 ? "Tudo pronto para enviar" : "Preencha as 5 etapas";
+}
+$("form").addEventListener("input", atualizarProgresso);
+$("form").addEventListener("change", atualizarProgresso);
+
+/* ---------- Telefone ---------- */
+$("in-tel").addEventListener("input", e => {
+  const d = e.target.value.replace(/\D/g, "").slice(0, 11);
+  let s = d;
+  if (d.length > 2) s = `(${d.slice(0, 2)}) ${d.slice(2)}`;
+  if (d.length > 7) s = `(${d.slice(0, 2)}) ${d.slice(2, d.length - 4)}-${d.slice(-4)}`;
+  e.target.value = s;
+});
+$("in-uc").addEventListener("input", e => { e.target.value = e.target.value.replace(/[^\d]/g, "").slice(0, 20); });
+
+/* ---------- Envio ---------- */
+function protocolo() {
+  const d = new Date(), p = n => String(n).padStart(2, "0");
+  const cs = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+  let r = ""; const a = crypto.getRandomValues(new Uint8Array(4));
+  a.forEach(x => r += cs[x % cs.length]);
+  return `RR-${String(d.getFullYear()).slice(2)}${p(d.getMonth() + 1)}${p(d.getDate())}-${r}`;
+}
+
+function validar() {
+  let ok = true;
+  const tipo = document.querySelector('input[name="tipo"]:checked');
+  $("e-tipo").hidden = !!tipo; ok = ok && !!tipo;
+  $("e-foto").hidden = estado.fotos.length > 0; ok = ok && estado.fotos.length > 0;
+  $("e-local").hidden = !!estado.local; ok = ok && !!estado.local;
+  const regras = [["c-uc", $("in-uc").value.length >= 5], ["c-nome", $("in-nome").value.trim().length >= 3], ["c-tel", $("in-tel").value.replace(/\D/g, "").length >= 10]];
+  regras.forEach(([id, v]) => { $(id).classList.toggle("invalido", !v); ok = ok && v; });
+  $("e-lgpd").hidden = $("in-lgpd").checked; ok = ok && $("in-lgpd").checked;
+  if (!ok) { const p = document.querySelector('.msg-erro:not([hidden]), .invalido'); if (p) p.scrollIntoView({ behavior: "smooth", block: "center" }); }
+  return ok ? tipo.value : null;
+}
+
+function paraBase64(blob) {
+  return new Promise((ok, falha) => {
+    const r = new FileReader();
+    r.onload = () => ok(String(r.result).split(",")[1]);
+    r.onerror = falha;
+    r.readAsDataURL(blob);
+  });
+}
+
+$("form").addEventListener("submit", async e => {
+  e.preventDefault();
+  $("e-envio").hidden = true;
+  const tipo = validar(); if (!tipo) return;
+  const btn = $("b-enviar"); btn.disabled = true; btn.textContent = "Enviando…";
+  const prot = protocolo();
+  try {
+    if (!DEMO) {
+      const fotos = [];
+      for (const f of estado.fotos) fotos.push(await paraBase64(await carimbar(f, estado.local, prot)));
+      const L = estado.local;
+      const datas = estado.fotos.map(f => f.data).filter(Boolean).sort((a, b) => a - b);
+      const r = await fetch(CONFIG.appsScriptUrl, {
+        method: "POST",
+        body: JSON.stringify({
+          protocolo: prot, tipo, latitude: L.lat, longitude: L.lng, precisao_m: L.precisao, origem_localizacao: L.origem,
+          unidade_consumidora: $("in-uc").value, responsavel_nome: $("in-nome").value.trim(), responsavel_telefone: $("in-tel").value,
+          propriedade: $("in-prop").value.trim() || null, regiao_referencia: $("in-reg").value.trim() || null,
+          observacao: $("in-obs").value.trim() || null, consentimento_lgpd: true,
+          data_foto: datas[0] ? datas[0].toISOString() : null, site: $("in-site").value, fotos
+        })
+      });
+      const res = await r.json();
+      if (!res.ok) throw new Error(res.erro || "falha");
+    } else {
+      const prev = await carimbar(estado.fotos[0], estado.local, prot);
+      $("prev-carimbo").src = URL.createObjectURL(prev); $("prev-carimbo").hidden = false;
+    }
+    $("protocolo").textContent = prot;
+    $("form").hidden = true; $("sucesso").hidden = false;
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  } catch (err) {
+    $("e-envio").textContent = "Não foi possível enviar agora. Verifique a internet e toque em Enviar de novo; seus dados continuam preenchidos.";
+    $("e-envio").hidden = false;
+  } finally { btn.disabled = false; btn.textContent = "Enviar ocorrência"; }
+});
+
+$("b-novo").onclick = () => {
+  estado.fotos.forEach(f => URL.revokeObjectURL(f.url));
+  Object.assign(estado, { fotos: [], local: null, fotoLocal: null, perto: null });
+  $("form").reset(); desenharFotos(); mostrarLocal();
+  ["s-sim", "s-nao"].forEach(id => $(id).setAttribute("aria-pressed", "false"));
+  $("bloco-gps").hidden = true; $("bloco-manual").hidden = true; $("bloco-manual").style.display = "none";
+  ignorarFoto = false; $("local-foto").hidden = true; $("pergunta-local").hidden = false; atualizarProgresso();
+  $("prev-carimbo").hidden = true;
+  $("sucesso").hidden = true; $("form").hidden = false; window.scrollTo({ top: 0 });
+};
+</script>
+</body>
+</html>
