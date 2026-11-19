@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#14532d">
+<title>Mapa dos chamados – Rede Elétrica Rural</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--campo:#14532d;--azul:#1f4e9c;--papel:#f2f7f3;--linha:#d3e3d7;--tinta:#1b2620;--suave:#56665d;
+  --vermelho:#b3261e;--amarelo:#d39b00;--verde:#2e7d32;--cinza:#8a958f;color-scheme:light}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{font-family:Barlow,system-ui,sans-serif;color:var(--tinta);background:var(--papel);display:flex;flex-direction:column}
+header{background:linear-gradient(160deg,var(--campo),#2e7d32);color:#fff;padding:12px 16px;display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;justify-content:space-between}
+h1{font-family:"Barlow Condensed",sans-serif;font-size:24px;margin:0}
+header small{opacity:.85}
+.painel{display:flex;flex-wrap:wrap;gap:8px;padding:10px 12px;background:#fff;border-bottom:1px solid var(--linha);align-items:center}
+.f{display:inline-flex;align-items:center;gap:6px;border:1.5px solid var(--linha);border-radius:999px;padding:6px 12px;font:600 15px Barlow,sans-serif;background:#fff;cursor:pointer}
+.f[aria-pressed="false"]{opacity:.4}
+.f i{width:12px;height:12px;border-radius:50%;display:inline-block}
+.f b{font-variant-numeric:tabular-nums}
+.camadas{margin-left:auto;display:flex;gap:8px}
+#mapa{flex:1;min-height:420px}
+.aviso{padding:24px;text-align:center;color:var(--suave)}
+.leaflet-popup-content{font:14px Barlow,sans-serif;line-height:1.35}
+.leaflet-popup-content b{font-family:"Barlow Condensed",sans-serif;font-size:17px}
+.legenda{background:#fff;padding:8px 10px;border-radius:8px;font:13px Barlow,sans-serif;box-shadow:0 1px 4px rgba(0,0,0,.25);max-width:220px}
+</style>
+</head>
+<body>
+<header>
+  <div><h1>Mapa dos chamados – Rede Elétrica Rural</h1><small id="sub">Carregando…</small></div>
+</header>
+<div class="painel" id="painel" hidden>
+  <button class="f" data-f="Vermelho" aria-pressed="true"><i style="background:var(--vermelho)"></i>Urgente <b>0</b></button>
+  <button class="f" data-f="Amarelo" aria-pressed="true"><i style="background:var(--amarelo)"></i>Grave em prazo <b>0</b></button>
+  <button class="f" data-f="Verde" aria-pressed="true"><i style="background:var(--verde)"></i>Risco leve <b>0</b></button>
+  <button class="f" data-f="Concluído" aria-pressed="false"><i style="background:var(--cinza)"></i>Concluído <b>0</b></button>
+  <div class="camadas">
+    <button class="f" id="b-calor" aria-pressed="true">Mapa de calor</button>
+    <button class="f" id="b-fundo" aria-pressed="true">Satélite</button>
+  </div>
+</div>
+<div id="mapa"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.heat/0.2.0/leaflet-heat.js"></script>
+<script>
+const API = "https://script.google.com/macros/s/AKfycbz0zv0oqHcy64jRbATSXhMZznvEfsAFKY8xo-Yac5jD0tqSNFTNQO-gO2fJZe8XWNJP/exec";
+const COR = { "Vermelho": "#b3261e", "Amarelo": "#d39b00", "Verde": "#2e7d32", "Concluído": "#8a958f" };
+const chave = location.hash.slice(1);
+const $ = s => document.querySelector(s);
+
+const mapa = L.map("mapa").setView([-17.881, -51.714], 10);
+const sat = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", { maxZoom: 19, attribution: "Imagens © Esri" }).addTo(mapa);
+const rua = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: "© OpenStreetMap" });
+const grupos = {}; Object.keys(COR).forEach(k => grupos[k] = L.layerGroup());
+let calor = null, pontos = [];
+
+$("#b-fundo").onclick = e => {
+  const s = e.currentTarget.getAttribute("aria-pressed") === "true";
+  e.currentTarget.setAttribute("aria-pressed", !s);
+  if (s) { mapa.removeLayer(sat); rua.addTo(mapa); e.currentTarget.textContent = "Mapa de ruas"; }
+  else { mapa.removeLayer(rua); sat.addTo(mapa); e.currentTarget.textContent = "Satélite"; }
+};
+$("#b-calor").onclick = e => {
+  const s = e.currentTarget.getAttribute("aria-pressed") === "true";
+  e.currentTarget.setAttribute("aria-pressed", !s);
+  desenharCalor();
+};
+document.querySelectorAll("[data-f]").forEach(b => b.onclick = () => {
+  const on = b.getAttribute("aria-pressed") !== "true";
+  b.setAttribute("aria-pressed", on);
+  on ? grupos[b.dataset.f].addTo(mapa) : mapa.removeLayer(grupos[b.dataset.f]);
+  desenharCalor();
+});
+
+function ativos() { return [...document.querySelectorAll("[data-f]")].filter(b => b.getAttribute("aria-pressed") === "true").map(b => b.dataset.f); }
+function desenharCalor() {
+  if (calor) { mapa.removeLayer(calor); calor = null; }
+  if ($("#b-calor").getAttribute("aria-pressed") !== "true" || !L.heatLayer) return;
+  const a = ativos();
+  const pts = pontos.filter(p => a.includes(p.farol)).map(p => [p.lat, p.lng, p.farol === "Vermelho" ? 1 : p.farol === "Amarelo" ? .7 : .4]);
+  if (pts.length) calor = L.heatLayer(pts, { radius: 28, blur: 22, maxZoom: 14, gradient: { .3: "#9fd4a6", .55: "#f2c94c", .8: "#e8742c", 1: "#b3261e" } }).addTo(mapa);
+}
+
+const legenda = L.control({ position: "bottomleft" });
+legenda.onAdd = () => { const d = L.DomUtil.create("div", "legenda"); d.id = "legenda"; return d; };
+legenda.addTo(mapa);
+
+async function carregar() {
+  if (!chave) { $("#sub").textContent = "Link sem chave de acesso. Use o link da aba Mapa da planilha."; return; }
+  try {
+    const r = await (await fetch(`${API}?acao=mapa&chave=${encodeURIComponent(chave)}`)).json();
+    if (!r.ok) { $("#sub").textContent = "Chave de acesso inválida."; return; }
+    pontos = r.pontos;
+    const cont = { "Vermelho": 0, "Amarelo": 0, "Verde": 0, "Concluído": 0 };
+    pontos.forEach(p => {
+      cont[p.farol] = (cont[p.farol] || 0) + 1;
+      const m = L.circleMarker([p.lat, p.lng], { radius: 8, color: "#fff", weight: 2, fillColor: COR[p.farol] || "#888", fillOpacity: .95 });
+      m.bindPopup(`<b>${p.protocolo}</b><br>${p.tipo}<br>Situação: ${p.status}<br>Gravidade: ${p.gravidade}<br>${p.dias} dia(s) desde o recebimento (${p.recebido})<br><a href="https://www.google.com/maps?q=${p.lat},${p.lng}" target="_blank" rel="noopener">Abrir no Google Maps</a>`);
+      (grupos[p.farol] || grupos["Verde"]).addLayer(m);
+    });
+    document.querySelectorAll("[data-f]").forEach(b => { b.querySelector("b").textContent = cont[b.dataset.f] || 0; if (b.getAttribute("aria-pressed") === "true") grupos[b.dataset.f].addTo(mapa); });
+    $("#painel").hidden = false;
+    $("#sub").textContent = `${pontos.length} chamado(s) · atualizado em ${r.atualizado}`;
+    $("#legenda").innerHTML = `<b>Farol</b><br>Urgente: grave há mais de ${r.prazos[0]} dias ou qualquer chamado há mais de ${r.prazos[1]} dias em aberto.`;
+    const abertos = pontos.filter(p => p.farol !== "Concluído");
+    if (abertos.length) mapa.fitBounds(L.latLngBounds(abertos.map(p => [p.lat, p.lng])).pad(0.3), { maxZoom: 14 });
+    desenharCalor();
+  } catch (_) { $("#sub").textContent = "Não foi possível carregar os dados agora. Tente de novo em instantes."; }
+}
+carregar();
+</script>
+</body>
+</html>
