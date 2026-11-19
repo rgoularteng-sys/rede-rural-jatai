@@ -118,6 +118,8 @@ body{padding-bottom:env(safe-area-inset-bottom)}
 .item small{color:var(--suave);font-size:13.5px}
 .vazio{color:var(--suave);font-size:14.5px;margin:0}
 .duas{display:grid;grid-template-columns:1.6fr 1fr;gap:10px}
+.conc{display:grid;gap:8px;padding:12px;border-radius:12px;background:var(--azul-claro)}
+.conc input[type=date]{min-height:48px}
 [hidden]{display:none!important}
 @media (max-width:480px){
   .topo{padding:18px 16px 22px}
@@ -252,6 +254,19 @@ body{padding-bottom:env(safe-area-inset-bottom)}
 
     <section class="etapa" aria-labelledby="t5">
       <h2 id="t5"><span class="num">5</span>Algo mais?</h2>
+      <div class="conc">
+        <p class="dica"><b>Já abriu chamado na concessionária</b> para este problema e ainda não foi resolvido? Informe aqui (opcional).</p>
+        <div class="duas">
+          <div class="campo">
+            <label for="in-cc">Nº do chamado</label>
+            <input id="in-cc" inputmode="text" autocomplete="off" maxlength="40" placeholder="Protocolo da concessionária">
+          </div>
+          <div class="campo">
+            <label for="in-cc-data">Data</label>
+            <input id="in-cc-data" type="date">
+          </div>
+        </div>
+      </div>
       <div class="campo">
         <label for="in-obs">Observação (opcional)</label>
         <textarea id="in-obs" maxlength="1000" placeholder="Ex.: poste ao lado da porteira, fio passando sobre o curral"></textarea>
@@ -554,6 +569,8 @@ function atualizarProgresso() {
 $("form").addEventListener("input", atualizarProgresso);
 $("form").addEventListener("change", atualizarProgresso);
 
+$("in-cc-data").max = new Date(Date.now() - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 10);
+
 /* ---------- Telefone ---------- */
 $("in-tel").addEventListener("input", e => {
   const d = e.target.value.replace(/\D/g, "").slice(0, 11);
@@ -614,7 +631,8 @@ $("form").addEventListener("submit", async e => {
           unidade_consumidora: $("in-uc").value, responsavel_nome: $("in-nome").value.trim(), responsavel_telefone: $("in-tel").value,
           propriedade: $("in-prop").value.trim() || null, regiao_referencia: $("in-reg").value.trim() || null,
           observacao: $("in-obs").value.trim() || null, consentimento_lgpd: true,
-          data_foto: datas[0] ? datas[0].toISOString() : null, site: $("in-site").value, fotos
+          data_foto: datas[0] ? datas[0].toISOString() : null, site: $("in-site").value, fotos,
+          chamado_concessionaria: $("in-cc").value.trim() || null, data_chamado_concessionaria: $("in-cc-data").value || null
         })
       });
       const res = await r.json();
