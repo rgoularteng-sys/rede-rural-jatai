@@ -108,6 +108,8 @@ body{padding-bottom:env(safe-area-inset-bottom)}
 .st-encaminhado{background:#e3defa;color:#4a3a9c}
 .st-atendido{background:var(--menta);color:var(--folha)}
 .st-descartado{background:#eceeed;color:var(--suave)}
+.st-cobrado{background:#ffe3cc;color:#8a3d00}
+.st-execucao{background:#d9f0f7;color:#0b5c75}
 .resultado{border-radius:12px;padding:14px;background:var(--papel);border:1px solid var(--linha);display:grid;gap:6px}
 .resultado .linha{display:flex;justify-content:space-between;gap:10px;font-size:15px}
 .resultado .linha span:first-child{color:var(--suave)}
@@ -141,8 +143,8 @@ body{padding-bottom:env(safe-area-inset-bottom)}
     <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="13" r="12" fill="none" stroke="#9fd4a6" stroke-width="2"/><path d="M14.5 5 8 14h4.5L11 21l7-9.5h-4.6z" fill="#ffffff"/></svg>
     <span id="nome-org">Sindicato Rural de Jataí</span>
   </div>
-  <h1>Viu um poste ou fio em risco na zona rural? Avise aqui.</h1>
-  <p>Leva 2 minutos. Sua informação ajuda a programar a manutenção da rede e evitar acidentes e queimadas.</p>
+  <h1>Viu um problema na rede elétrica da zona rural? Nos informe aqui.</h1>
+  <p>Poste com risco de queda, fio baixo ou mato na rede. Sua informação ajuda a programar a manutenção e evitar acidentes e queimadas.</p>
 </header>
 
 <div class="progresso" aria-live="polite">
@@ -709,7 +711,7 @@ function desenharMeus() {
   });
 }
 function pintar(el, status) {
-  const k = { "Recebido": "recebido", "Em análise": "analise", "Encaminhado": "encaminhado", "Atendido": "atendido", "Descartado": "descartado" }[status] || "recebido";
+  const k = { "Recebido": "recebido", "Em análise": "analise", "Encaminhado": "encaminhado", "Cobrado": "cobrado", "Em execução": "execucao", "Atendido": "atendido", "Descartado": "descartado" }[status] || "recebido";
   el.className = "pill st-" + k; el.textContent = status;
 }
 
