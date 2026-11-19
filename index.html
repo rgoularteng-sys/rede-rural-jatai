@@ -98,6 +98,26 @@ main{max-width:560px;margin:0 auto;padding:18px 16px 40px;display:grid;gap:16px}
 .chip label{min-height:96px}
 .local-foto-wrap{display:grid;gap:6px}
 body{padding-bottom:env(safe-area-inset-bottom)}
+.abas{display:grid;grid-template-columns:1fr 1fr;background:#fff;border:1.5px solid var(--linha);border-radius:12px;overflow:hidden}
+.abas button{border:0;background:#fff;padding:13px 8px;font:600 16px var(--body);color:var(--suave);cursor:pointer}
+.abas button[aria-selected="true"]{background:var(--campo);color:#fff}
+.abas button:focus-visible{outline:3px solid var(--azul);outline-offset:-3px}
+.pill{display:inline-block;padding:3px 10px;border-radius:999px;font-size:13.5px;font-weight:600}
+.st-recebido{background:var(--azul-claro);color:var(--azul)}
+.st-analise{background:#fff1cc;color:#7a5200}
+.st-encaminhado{background:#e3defa;color:#4a3a9c}
+.st-atendido{background:var(--menta);color:var(--folha)}
+.st-descartado{background:#eceeed;color:var(--suave)}
+.resultado{border-radius:12px;padding:14px;background:var(--papel);border:1px solid var(--linha);display:grid;gap:6px}
+.resultado .linha{display:flex;justify-content:space-between;gap:10px;font-size:15px}
+.resultado .linha span:first-child{color:var(--suave)}
+.lista{display:grid;gap:10px;margin:0;padding:0;list-style:none}
+.item{border:1px solid var(--linha);border-radius:12px;padding:12px;display:grid;gap:6px}
+.item-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.item-prot{font-family:var(--display);font-size:20px;color:var(--campo);letter-spacing:.03em}
+.item small{color:var(--suave);font-size:13.5px}
+.vazio{color:var(--suave);font-size:14.5px;margin:0}
+.duas{display:grid;grid-template-columns:1.6fr 1fr;gap:10px}
 [hidden]{display:none!important}
 @media (max-width:480px){
   .topo{padding:18px 16px 22px}
@@ -130,6 +150,10 @@ body{padding-bottom:env(safe-area-inset-bottom)}
   </div>
 </div>
 <main>
+  <div class="abas" role="tablist" aria-label="Escolha o que fazer">
+    <button type="button" role="tab" id="aba-novo" aria-selected="true">Novo chamado</button>
+    <button type="button" role="tab" id="aba-acomp" aria-selected="false">Acompanhar</button>
+  </div>
   <div class="demo" id="aviso-demo" hidden><b>Modo demonstração.</b> Este é o visual do formulário. Nada do que for preenchido aqui é enviado.</div>
 
   <form id="form" novalidate>
@@ -250,8 +274,33 @@ body{padding-bottom:env(safe-area-inset-bottom)}
     <div class="protocolo" id="protocolo"></div>
     <img id="prev-carimbo" alt="Foto com carimbo de data, localização e protocolo" hidden style="max-width:100%;border-radius:10px">
     <p class="dica">Guarde este número de protocolo. A equipe pode entrar em contato pelo telefone informado.<br><b>Em caso de fio caído ou risco imediato, não se aproxime e ligue para a concessionária de energia.</b></p>
+    <button type="button" class="btn btn-pri" id="b-acomp-este" style="width:100%">Acompanhar este chamado</button>
     <button type="button" class="btn btn-sec" id="b-novo" style="width:100%">Enviar outra ocorrência</button>
   </section>
+
+  <div id="acompanhar" hidden style="display:grid;gap:16px">
+    <section class="etapa" aria-labelledby="ta1">
+      <h2 id="ta1">Consultar andamento</h2>
+      <p class="dica">Digite o protocolo recebido no envio e os 4 últimos dígitos do telefone informado no chamado.</p>
+      <div class="duas">
+        <div class="campo">
+          <label for="cq-prot">Protocolo</label>
+          <input id="cq-prot" autocomplete="off" autocapitalize="characters" placeholder="RR-261119-AB12">
+        </div>
+        <div class="campo">
+          <label for="cq-tel">Final do telefone</label>
+          <input id="cq-tel" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="0000">
+        </div>
+      </div>
+      <button type="button" class="btn btn-env" id="b-consultar">Ver andamento</button>
+      <div class="resultado" id="cq-res" hidden aria-live="polite"></div>
+    </section>
+    <section class="etapa" aria-labelledby="ta2">
+      <h2 id="ta2">Meus chamados neste celular</h2>
+      <p class="dica">Ficam guardados só neste aparelho e navegador. Se trocar de celular, consulte pelo protocolo.</p>
+      <ul class="lista" id="meus"></ul>
+    </section>
+  </div>
 
   <footer class="rodape">
     <div>Realização: <b>Sindicato Rural de Jataí</b></div>
@@ -574,8 +623,11 @@ $("form").addEventListener("submit", async e => {
       const prev = await carimbar(estado.fotos[0], estado.local, prot);
       $("prev-carimbo").src = URL.createObjectURL(prev); $("prev-carimbo").hidden = false;
     }
+    salvarMeu({ protocolo: prot, quando: new Date().toISOString(), tipo: TIPO_NOME[tipo],
+      lat: estado.local.lat, lng: estado.local.lng, tel4: $("in-tel").value.replace(/\D/g, "").slice(-4) });
     $("protocolo").textContent = prot;
-    $("form").hidden = true; $("sucesso").hidden = false;
+    $("form").hidden = true; $("sucesso").hidden = false; $("sucesso").dataset.ativo = "1";
+    document.querySelector(".progresso").hidden = true;
     window.scrollTo({ top: 0, behavior: "smooth" });
   } catch (err) {
     $("e-envio").textContent = "Não foi possível enviar agora. Verifique a internet e toque em Enviar de novo; seus dados continuam preenchidos.";
@@ -591,7 +643,89 @@ $("b-novo").onclick = () => {
   $("bloco-gps").hidden = true; $("bloco-manual").hidden = true; $("bloco-manual").style.display = "none";
   ignorarFoto = false; $("local-foto").hidden = true; $("pergunta-local").hidden = false; atualizarProgresso();
   $("prev-carimbo").hidden = true;
-  $("sucesso").hidden = true; $("form").hidden = false; window.scrollTo({ top: 0 });
+  $("sucesso").hidden = true; $("sucesso").dataset.ativo = "0"; $("form").hidden = false;
+  document.querySelector(".progresso").hidden = false; window.scrollTo({ top: 0 });
+};
+
+/* ---------- Abas ---------- */
+function mostrarAba(qual) {
+  const novo = qual === "novo", enviado = $("sucesso").dataset.ativo === "1";
+  $("aba-novo").setAttribute("aria-selected", novo);
+  $("aba-acomp").setAttribute("aria-selected", !novo);
+  $("form").hidden = !novo || enviado;
+  $("sucesso").hidden = !novo || !enviado;
+  document.querySelector(".progresso").hidden = !novo || enviado;
+  $("acompanhar").hidden = novo;
+  if (!novo) desenharMeus();
+  window.scrollTo({ top: 0 });
+}
+$("aba-novo").onclick = () => mostrarAba("novo");
+$("aba-acomp").onclick = () => mostrarAba("acomp");
+
+/* ---------- Meus chamados (guardados só neste aparelho) ---------- */
+const TIPO_NOME = { poste_risco_queda: "Poste com risco de queda", rede_baixa: "Fio / rede baixa", mato_faixa: "Mato na faixa da rede", outro: "Outro" };
+const CHAVE = "rede-rural-jatai:meus";
+function lerMeus() { try { return JSON.parse(localStorage.getItem(CHAVE) || "[]"); } catch (_) { return []; } }
+function salvarMeu(c) { try { const l = lerMeus().filter(x => x.protocolo !== c.protocolo); l.unshift(c); localStorage.setItem(CHAVE, JSON.stringify(l.slice(0, 50))); } catch (_) {} }
+function desenharMeus() {
+  const l = lerMeus(), ul = $("meus"); ul.innerHTML = "";
+  if (!l.length) { ul.innerHTML = '<li class="vazio">Nenhum chamado enviado deste celular ainda.</li>'; return; }
+  l.forEach(c => {
+    const li = document.createElement("li"); li.className = "item";
+    const d = new Date(c.quando);
+    li.innerHTML = `<div class="item-top"><span class="item-prot"></span><span class="pill st-recebido" data-st>—</span></div>
+      <small></small>
+      <a target="_blank" rel="noopener">Ver local no mapa</a>
+      <button type="button" class="btn btn-sec">Atualizar andamento</button>`;
+    li.querySelector(".item-prot").textContent = c.protocolo;
+    li.querySelector("small").textContent = `${c.tipo || ""} · enviado em ${dataBR(d)}`;
+    li.querySelector("a").href = `https://www.google.com/maps?q=${c.lat},${c.lng}`;
+    const pill = li.querySelector("[data-st]");
+    if (c.status) pintar(pill, c.status);
+    li.querySelector("button").onclick = async () => {
+      pill.textContent = "consultando…";
+      const r = await consultar(c.protocolo, c.tel4);
+      if (r.ok) { pintar(pill, r.status); c.status = r.status; salvarMeu(c); } else { pill.textContent = "não encontrado"; }
+    };
+    ul.appendChild(li);
+  });
+}
+function pintar(el, status) {
+  const k = { "Recebido": "recebido", "Em análise": "analise", "Encaminhado": "encaminhado", "Atendido": "atendido", "Descartado": "descartado" }[status] || "recebido";
+  el.className = "pill st-" + k; el.textContent = status;
+}
+
+/* ---------- Consulta de andamento ---------- */
+async function consultar(prot, tel4) {
+  if (DEMO) return { ok: true, protocolo: prot, status: "Recebido", tipo: "", recebido_em: "(demonstração)", encaminhado_em: "" };
+  try {
+    const u = `${CONFIG.appsScriptUrl}?acao=consulta&protocolo=${encodeURIComponent(prot)}&tel4=${encodeURIComponent(tel4)}`;
+    return await (await fetch(u)).json();
+  } catch (_) { return { ok: false, erro: "Sem conexão agora. Tente de novo em instantes." }; }
+}
+$("cq-tel").addEventListener("input", e => { e.target.value = e.target.value.replace(/\D/g, "").slice(0, 4); });
+$("b-consultar").onclick = async () => {
+  const prot = $("cq-prot").value.trim().toUpperCase(), tel4 = $("cq-tel").value;
+  const box = $("cq-res"); box.hidden = false;
+  if (!/^RR-\d{6}-[A-Z0-9]{4}$/.test(prot) || tel4.length !== 4) { box.innerHTML = '<span class="msg-erro">Confira o protocolo (ex.: RR-261119-AB12) e os 4 últimos dígitos do telefone.</span>'; return; }
+  const b = $("b-consultar"); b.disabled = true; b.textContent = "Consultando…";
+  const r = await consultar(prot, tel4);
+  b.disabled = false; b.textContent = "Ver andamento";
+  if (!r.ok) { box.innerHTML = ""; const s = document.createElement("span"); s.className = "msg-erro"; s.textContent = r.erro; box.appendChild(s); return; }
+  box.innerHTML = `<div class="linha"><span>Protocolo</span><b></b></div><div class="linha"><span>Situação</span><span class="pill" data-st></span></div>
+    <div class="linha"><span>Tipo</span><span data-tipo></span></div><div class="linha"><span>Recebido em</span><span data-rec></span></div>
+    <div class="linha" data-enc-l><span>Encaminhado em</span><span data-enc></span></div>`;
+  box.querySelector("b").textContent = r.protocolo;
+  pintar(box.querySelector("[data-st]"), r.status);
+  box.querySelector("[data-tipo]").textContent = r.tipo || "—";
+  box.querySelector("[data-rec]").textContent = r.recebido_em || "—";
+  if (r.encaminhado_em) box.querySelector("[data-enc]").textContent = r.encaminhado_em; else box.querySelector("[data-enc-l]").hidden = true;
+};
+$("b-acomp-este").onclick = () => {
+  $("cq-prot").value = $("protocolo").textContent;
+  $("cq-tel").value = (lerMeus()[0] || {}).tel4 || "";
+  mostrarAba("acomp");
+  $("b-consultar").click();
 };
 </script>
 </body>
