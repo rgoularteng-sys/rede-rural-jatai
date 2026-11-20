@@ -137,6 +137,8 @@ body{padding-bottom:env(safe-area-inset-bottom)}
   .seg button{padding:14px 6px;font-size:14.5px}
 }
 @media (max-width:350px){.chips{grid-template-columns:1fr}.chip label{min-height:0}h1{font-size:26px}}
+.aviso-topo{margin:12px 0 0;padding:10px 12px;border-radius:10px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.35);font-size:15px;line-height:1.35}
+.aviso-env{margin:0;padding:10px 12px;border-radius:10px;background:#fff6dc;border:1px solid #f0d58a;color:#5c4400;font-size:15px;line-height:1.35}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
@@ -148,6 +150,7 @@ body{padding-bottom:env(safe-area-inset-bottom)}
   </div>
   <h1>Viu um problema na rede elétrica da zona rural? Nos informe aqui.</h1>
   <p>Poste com risco de queda, fio baixo ou mato na rede. Sua informação ajuda a acionar a concessionária e evitar acidentes e queimadas.</p>
+  <p class="aviso-topo"><b>Importante:</b> este canal não substitui o chamado na concessionária de energia. Registre também o problema pelos canais oficiais dela. O Sindicato Rural usa estas informações para ajudar a cobrar a solução.</p>
 </header>
 
 <div class="progresso" aria-live="polite">
@@ -297,6 +300,7 @@ body{padding-bottom:env(safe-area-inset-bottom)}
       </label>
       <p class="msg-erro" id="e-lgpd" hidden>Marque a autorização para enviar.</p>
       <input type="text" id="in-site" name="site" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px">
+      <p class="aviso-env">Lembre-se: este registro <b>não substitui</b> o chamado na concessionária de energia. Se ainda não abriu, abra também pelos canais oficiais dela e informe o número acima.</p>
       <button type="submit" class="btn btn-env" id="b-enviar">Enviar ocorrência</button>
       <p class="msg-erro" id="e-envio" hidden></p>
     </section>
@@ -308,7 +312,7 @@ body{padding-bottom:env(safe-area-inset-bottom)}
     <h2>Ocorrência recebida</h2>
     <div class="protocolo" id="protocolo"></div>
     <img id="prev-carimbo" alt="Foto com carimbo de data, localização e protocolo" hidden style="max-width:100%;border-radius:10px">
-    <p class="dica">Guarde este número de protocolo. A equipe pode entrar em contato pelo telefone informado.<br><b>Em caso de fio caído ou risco imediato, não se aproxime e ligue para a concessionária de energia.</b></p>
+    <p class="dica">Guarde este número de protocolo. A equipe pode entrar em contato pelo telefone informado.<br>Se ainda não fez, <b>abra também o chamado na concessionária de energia</b> — este registro não o substitui.<br><b>Em caso de fio caído ou risco imediato, não se aproxime e ligue para a concessionária de energia.</b></p>
     <button type="button" class="btn btn-pri" id="b-acomp-este" style="width:100%">Acompanhar este chamado</button>
     <button type="button" class="btn btn-sec" id="b-novo" style="width:100%">Enviar outra ocorrência</button>
   </section>
