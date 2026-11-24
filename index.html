@@ -191,7 +191,7 @@ body{padding-bottom:env(safe-area-inset-bottom)}
 
     <section class="etapa" aria-labelledby="t2">
       <h2 id="t2"><span class="num">2</span>Foto do local <span class="obrig" aria-hidden="true">*</span></h2>
-      <p class="dica">Fotografe o poste inteiro, de onde dá para ver o problema. Até 3 fotos. Data, hora e localização são gravadas na foto automaticamente no envio.</p>
+      <p class="dica">Fotografe o problema de forma que dê para ver bem (o poste inteiro, o fio ou o mato na rede). Até 3 fotos. Data, hora e localização são gravadas na foto automaticamente no envio.</p>
       <div class="botoes">
         <button type="button" class="btn btn-pri" id="b-camera">
           <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h3l2-3h6l2 3h3v13H4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="12" cy="13" r="3.5" fill="none" stroke="currentColor" stroke-width="2"/></svg>
@@ -206,7 +206,7 @@ body{padding-bottom:env(safe-area-inset-bottom)}
     </section>
 
     <section class="etapa" aria-labelledby="t3">
-      <h2 id="t3"><span class="num">3</span>Onde fica o poste? <span class="obrig" aria-hidden="true">*</span></h2>
+      <h2 id="t3"><span class="num">3</span>Onde é o problema? <span class="obrig" aria-hidden="true">*</span></h2>
       <div class="local ok" id="local-foto" hidden>
         <span><b>Localização preenchida pela foto.</b> Confira se o ponto está certo.</span>
         <strong id="lf-coord"></strong>
@@ -214,8 +214,8 @@ body{padding-bottom:env(safe-area-inset-bottom)}
         <button type="button" class="btn btn-sec" id="b-trocar" style="margin-top:6px">Usar outra localização</button>
       </div>
       <div id="pergunta-local" style="display:grid;gap:10px">
-        <p class="dica">Se a foto tiver localização, ela é preenchida sozinha. Se não tiver: você está perto do poste agora?</p>
-        <div class="seg" role="group" aria-label="Está perto do poste agora?">
+        <p class="dica">Se a foto tiver localização, ela é preenchida sozinha. Se não tiver: você está no local agora?</p>
+        <div class="seg" role="group" aria-label="Está no local agora?">
           <button type="button" id="s-sim" aria-pressed="false">Sim, estou no local</button>
           <button type="button" id="s-nao" aria-pressed="false">Não, já saí de lá</button>
         </div>
@@ -228,27 +228,27 @@ body{padding-bottom:env(safe-area-inset-bottom)}
       <div id="bloco-manual" hidden style="display:grid;gap:10px">
         <button type="button" class="btn btn-pri" id="b-mapa" style="width:100%">
           <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2z M9 4v14 M15 6v14" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
-          Marcar o poste no mapa</button>
+          Marcar o local no mapa</button>
         <div id="mapa-box" hidden style="display:grid;gap:8px">
           <div class="mapa-wrap">
-            <div id="mapa" role="application" aria-label="Mapa para marcar o local do poste"></div>
+            <div id="mapa" role="application" aria-label="Mapa para marcar o local do problema"></div>
             <svg class="pino" width="40" height="52" viewBox="0 0 40 52" aria-hidden="true"><path d="M20 2C10.6 2 3 9.6 3 19c0 12.5 17 31 17 31s17-18.5 17-31C37 9.6 29.4 2 20 2z" fill="#b3261e" stroke="#fff" stroke-width="3"/><circle cx="20" cy="19" r="6.5" fill="#fff"/></svg>
           </div>
           <div class="botoes">
             <button type="button" class="btn btn-sec" id="b-camada">Ver mapa de ruas</button>
             <button type="button" class="btn btn-sec" id="b-aqui">Ir para onde estou</button>
           </div>
-          <p class="dica" id="mapa-dica"><b>Arraste o mapa até o pino vermelho ficar em cima do poste</b> (ou toque no local). Use o + para aproximar.</p>
+          <p class="dica" id="mapa-dica"><b>Arraste o mapa até o pino vermelho ficar em cima do local do problema</b> (ou toque nele). Use o + para aproximar.</p>
           <button type="button" class="btn btn-env" id="b-usar-ponto">Usar este ponto</button>
         </div>
-        <p class="dica">Ou cole a localização do poste: link do Google Maps, localização recebida pelo WhatsApp ou coordenadas.</p>
+        <p class="dica">Ou cole a localização do problema: link do Google Maps, localização recebida pelo WhatsApp ou coordenadas.</p>
         <div class="campo">
-          <label for="in-coord">Localização do poste</label>
+          <label for="in-coord">Localização do problema</label>
           <input id="in-coord" inputmode="text" autocomplete="off" placeholder="Ex.: -17.8812, -51.7156 ou link do Maps">
         </div>
       </div>
       <div class="local" id="local" hidden></div>
-      <p class="msg-erro" id="e-local" hidden>Informe a localização do poste.</p>
+      <p class="msg-erro" id="e-local" hidden>Informe a localização do problema.</p>
     </section>
 
     <section class="etapa" aria-labelledby="t4">
@@ -529,7 +529,7 @@ $("s-nao").onclick = () => marcar(false);
 
 $("b-gps").onclick = () => {
   if (!navigator.geolocation) return mostrarLocal("Este aparelho não informa a localização. Escolha “Não, já saí de lá” e cole a localização.", "aviso");
-  mostrarLocal("Buscando sua localização… fique perto do poste, de preferência a céu aberto.");
+  mostrarLocal("Buscando sua localização… fique no local, de preferência a céu aberto.");
   navigator.geolocation.getCurrentPosition(
     p => definirLocal(p.coords.latitude, p.coords.longitude, "gps_aparelho", p.coords.accuracy),
     err => mostrarLocal(err.code === 1
